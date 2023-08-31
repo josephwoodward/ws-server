@@ -25,4 +25,20 @@ func Upgrade(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		http.Error(w, "invalid value for header 'connection'", http.StatusMethodNotAllowed)
 	}
+
+	if h := r.Header.Get("Sec-Websocket-Key"); h == "" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, "invalid value for header 'connection'", http.StatusMethodNotAllowed)
+	}
+
+	// TODO: Response
+	// HTTP/1.1 101 Switching Protocols
+	// Upgrade: websocket
+	// Connection: Upgrade
+	// Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+
+	w.WriteHeader(http.StatusSwitchingProtocols)
+	w.Header().Add("Upgrade", "websocket")
+	w.Header().Add("Connection", "Upgrade")
+	w.Header().Add("Sec-WebSocket-Accept", "")
 }

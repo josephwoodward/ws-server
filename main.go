@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", ws.Upgrade)
 	server := &http.Server{Addr: ":8080", Handler: mux}
