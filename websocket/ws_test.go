@@ -9,21 +9,19 @@ import (
 )
 
 func TestMethodMustBeGet(t *testing.T) {
-	t.Run("returns Pepper's score", func(t *testing.T) {
-		// Arrange
-		request, _ := http.NewRequest(http.MethodPost, "/ws", nil)
-		resp := httptest.NewRecorder()
+	// Arrange
+	request, _ := http.NewRequest(http.MethodPost, "/ws", nil)
+	resp := httptest.NewRecorder()
 
-		// Act
-		ws.Upgrade(resp, request)
+	// Act
+	ws.Upgrade(resp, request)
 
-		// Assert
-		want := http.StatusMethodNotAllowed
-		got := resp.Result().StatusCode
-		if got != want {
-			t.Errorf("wanted %d but got %d", got, want)
-		}
-	})
+	// Assert
+	want := http.StatusMethodNotAllowed
+	got := resp.Result().StatusCode
+	if got != want {
+		t.Errorf("wanted %d but got %d", got, want)
+	}
 }
 
 func TestNonGetMethodsShouldFail(t *testing.T) {
@@ -50,5 +48,30 @@ func TestNonGetMethodsShouldFail(t *testing.T) {
 		if tc.want != got {
 			t.Errorf("wanted %d but got %d", tc.want, got)
 		}
+	}
+}
+
+func TestReturnsCorrectSecWebSocketKey(t *testing.T) {
+	// Arrange
+	request, _ := http.NewRequest(http.MethodGet, "/ws", nil)
+	request.Header.Add("Upgrade", "websocket")
+	request.Header.Add("Connection", "Upgrade")
+	request.Header.Add("Sec-WebSocket-Key", "helloworld")
+	resp := httptest.NewRecorder()
+
+	// Act
+	ws.Upgrade(resp, request)
+
+	// Assert
+	want := http.StatusSwitchingProtocols
+	got := resp.Result().StatusCode
+	if got != want {
+		t.Errorf("wanted %d but got %d", want, got)
+	}
+
+	got2 := resp.Result().Header.Get("Sec-WebSocket-Accept")
+	want2 := "helloworld+258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+	if got2 != want2 {
+		t.Errorf("wanted %s but got %s", want2, got2)
 	}
 }
