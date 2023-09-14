@@ -75,3 +75,14 @@ func TestReturnsCorrectSecWebSocketKey(t *testing.T) {
 		t.Errorf("wanted %s but got %s", want2, got2)
 	}
 }
+
+func assert(t *testing.T, expected interface{}, actual interface{}) {
+
+	if actual != expected {
+		t.Errorf("\nexpected: %v \ngot: %v", expected, actual)
+	}
+}
+
+func TestGetAcceptHash(t *testing.T) {
+	assert(t, ws.GenerateAcceptHash("dGhlIHNhbXBsZSBub25jZQ=="), "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
+}
