@@ -22,33 +22,30 @@ type WsUpgradeResult struct {
 	bufrw *bufio.ReadWriter
 }
 
-func (ws *WsUpgradeResult) ReadLoop() {
-	for {
-		frame := Frame{}
-		head, err := ws.Read(2)
-		if err != nil {
-			fmt.Printf(err.Error())
-		}
+// func (ws *WsUpgradeResult) ReadLoop() {
+// 	for {
+// 		frame := Frame{}
+// 		head, err := ws.Read(2)
+// 		if err != nil {
+// 			fmt.Printf(err.Error())
+// 		}
 
-		frame.IsFragment = (head[0] & 0x80) == 0x00
-		frame.Opcode = head[0] & 0x0F
-		frame.Reserved = (head[0] & 0x70)
-	}
-}
+// 		frame.IsFragment = (head[0] & 0x80) == 0x00
+// 		frame.Opcode = head[0] & 0x0F
+// 		frame.Reserved = (head[0] & 0x70)
+// 	}
+// }
 
 func (ws *WsUpgradeResult) Read2(sz int) ([]byte, error) {
 	data := make([]byte, 4096)
 	for {
 		bytesRead, err := ws.bufrw.Read(data)
 		if err != nil && err != io.EOF {
-			fmt.Print("error")
 			return data, err
 		}
 		if bytesRead > 0 {
 			break
 		}
-
-		fmt.Println(data)
 	}
 
 	return data, nil

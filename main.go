@@ -37,23 +37,22 @@ func main() {
 			}
 
 			frame.IsFragment = (head[0] & 0x80) == 0x00
-			// https: //datatracker.ietf.org/doc/html/rfc6455#section-11.8
-			frame.Opcode = head[0] & 0x0F
+			// https://datatracker.ietf.org/doc/html/rfc6455#section-11.8
+			// frame.Opcode = head[0] & 0x0F
 			frame.Opcode2 = ws.WsOpCode(head[0] & 0x0F)
 			frame.Reserved = (head[0] & 0x70)
+			frame.IsMasked = (head[1] & 0x80) == 0x80
+			frame.Length = uint64(head[1] & 0x7F)
 
-			// switch frame.Opcode {
 			switch frame.Opcode2 {
 			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
 				fmt.Print("ping")
+			case ws.WsTextMessage:
+				fmt.Println("text message")
 			default:
 				break
 
 			}
-
-			fmt.Print(head)
-
-			_ = head
 		}
 		// server.ws = wsRes
 	})
