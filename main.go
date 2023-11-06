@@ -29,7 +29,12 @@ func main() {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
+		buf := make([]byte, 4096)
 		for {
+
+			len, err := wsRes.bufrw.Read(buf)
+			wsRes.Read(buf)
+
 			frame := ws.Frame{}
 			head, err := wsRes.Read2(2)
 			if err != nil {

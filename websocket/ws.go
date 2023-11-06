@@ -51,7 +51,7 @@ func (ws *WsUpgradeResult) Read2(sz int) ([]byte, error) {
 	return data, nil
 }
 
-func (ws *WsUpgradeResult) Read3(sz int) ([]byte, error) {
+func (ws *WsUpgradeResult) Read3() ([]byte, error) {
 	data := make([]byte, 4096)
 	_, err := ws.bufrw.Read(data)
 	if err != nil {
