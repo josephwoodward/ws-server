@@ -31,7 +31,7 @@ func main() {
 
 		for {
 			frame := ws.Frame{}
-			head, err := wsRes.Read2(2)
+			head, err := wsRes.Read(2)
 			if err != nil {
 				fmt.Printf(err.Error())
 			}
@@ -44,11 +44,46 @@ func main() {
 			frame.IsMasked = (head[1] & 0x80) == 0x80
 			frame.Length = uint64(head[1] & 0x7F)
 
+			// if frame.IsMasked {
+			// 	frame.MaskingKey = ""
+
+			// }
+
+			// if frame.Length == 126 {
+			// 	data, err := wsRes.Read(2)
+			// 	if err != nil {
+			// 		return frame, err
+			// 	}
+			// 	length = uint64(binary.BigEndian.Uint16(data))
+			// } else if frame.Length == 127 {
+			// 	data, err := wsRes.Read(8)
+			// 	if err != nil {
+			// 		return frame, err
+			// 	}
+			// 	length = uint64(binary.BigEndian.Uint64(data))
+			// }
+
+			mask, err := wsRes.Read(4)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
+			payload, err := wsRes.Read(int(frame.Length)) // possible data loss
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
+			for i := uint64(0); i < frame.Length; i++ {
+				payload[i] ^= mask[i%4]
+			}
+			frame.Payload = payload
+			frame.MaskingKey = mask
+
 			switch frame.Opcode2 {
 			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
 				fmt.Print("ping")
 			case ws.WsTextMessage:
-				fmt.Println("text message")
+				fmt.Printf("payload: %s", frame.Payload)
 			default:
 				break
 

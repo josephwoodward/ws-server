@@ -25,6 +25,7 @@ type Frame struct {
 	IsMasked   bool
 	Length     uint64
 	Payload    []byte
+	MaskingKey []byte
 }
 
 // Get the Pong frame
