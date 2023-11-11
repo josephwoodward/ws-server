@@ -31,39 +31,34 @@ func main() {
 
 		for {
 			frame := ws.Frame{}
+
+			// read first 2 bytes (16 bits)
 			head, err := wsRes.Read(2)
 			if err != nil {
 				fmt.Printf(err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 
+			// https://datatracker.ietf.org/doc/html/rfc6455#section-5.2
+			// 1 byte (8 bits) is the smallest addressable unit of memory
+			// work out flags with first 4 bits, remaing 4 bits are opcode
+			// 129 = 1000 0001
+
+			// Fragment is first bit so target first bit to determind fragment
+			// 10000000 is 128 decimal, 0x80 hexidecimal
+			// 0x00 = 0000000
+			// fmt.Printf("The value is: %t", (10000001&10000000) == 00000000) = false
+			// 10000001
+			// 10000000 = 0
+
 			frame.IsFragment = (head[0] & 0x80) == 0x00
-			// https://datatracker.ietf.org/doc/html/rfc6455#section-11.8
-			// frame.Opcode = head[0] & 0x0F
-			frame.Opcode2 = ws.WsOpCode(head[0] & 0x0F)
+			frame.Opcode = ws.WsOpCode(head[0] & 0x0F)
 			frame.Reserved = (head[0] & 0x70)
+
 			frame.IsMasked = (head[1] & 0x80) == 0x80
 			frame.Length = uint64(head[1] & 0x7F)
 
-			// if frame.IsMasked {
-			// 	frame.MaskingKey = ""
-
-			// }
-
-			// if frame.Length == 126 {
-			// 	data, err := wsRes.Read(2)
-			// 	if err != nil {
-			// 		return frame, err
-			// 	}
-			// 	length = uint64(binary.BigEndian.Uint16(data))
-			// } else if frame.Length == 127 {
-			// 	data, err := wsRes.Read(8)
-			// 	if err != nil {
-			// 		return frame, err
-			// 	}
-			// 	length = uint64(binary.BigEndian.Uint64(data))
-			// }
-
-			mask, err := wsRes.Read(4)
+			frame.MaskingKey, err = wsRes.Read(4)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
@@ -74,12 +69,11 @@ func main() {
 			}
 
 			for i := uint64(0); i < frame.Length; i++ {
-				payload[i] ^= mask[i%4]
+				payload[i] ^= frame.MaskingKey[i%4]
 			}
 			frame.Payload = payload
-			frame.MaskingKey = mask
 
-			switch frame.Opcode2 {
+			switch frame.Opcode {
 			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
 				fmt.Print("ping")
 			case ws.WsTextMessage:
