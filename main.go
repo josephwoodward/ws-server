@@ -36,24 +36,53 @@ func main() {
 			wsRes.Read(buf)
 
 			frame := ws.Frame{}
-			head, err := wsRes.Read2(2)
+
+			// read first 2 bytes (16 bits)
+			head, err := wsRes.Read(2)
 			if err != nil {
 				fmt.Printf(err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 
+			// https://datatracker.ietf.org/doc/html/rfc6455#section-5.2
+			// 1 byte (8 bits) is the smallest addressable unit of memory
+			// work out flags with first 4 bits, remaing 4 bits are opcode
+			// 129 = 1000 0001
+
+			// Fragment is first bit so target first bit to determind fragment
+			// 10000000 is 128 decimal, 0x80 hexidecimal
+			// 0x00 = 0000000
+			// fmt.Printf("The value is: %t", (10000001&10000000) == 00000000) = false
+			// 10000001
+			// 10000000 = 0
+
 			frame.IsFragment = (head[0] & 0x80) == 0x00
-			// https://datatracker.ietf.org/doc/html/rfc6455#section-11.8
-			// frame.Opcode = head[0] & 0x0F
-			frame.Opcode2 = ws.WsOpCode(head[0] & 0x0F)
+			frame.Opcode = ws.WsOpCode(head[0] & 0x0F)
 			frame.Reserved = (head[0] & 0x70)
+
 			frame.IsMasked = (head[1] & 0x80) == 0x80
 			frame.Length = uint64(head[1] & 0x7F)
 
-			switch frame.Opcode2 {
+			frame.MaskingKey, err = wsRes.Read(4)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
+			payload, err := wsRes.Read(int(frame.Length)) // possible data loss
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
+			for i := uint64(0); i < frame.Length; i++ {
+				payload[i] ^= frame.MaskingKey[i%4]
+			}
+			frame.Payload = payload
+
+			switch frame.Opcode {
 			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
 				fmt.Print("ping")
 			case ws.WsTextMessage:
-				fmt.Println("text message")
+				fmt.Printf("payload: %s", frame.Payload)
 			default:
 				break
 
