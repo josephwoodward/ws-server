@@ -61,15 +61,15 @@ func (ws *WsUpgradeResult) Read3(sz int) ([]byte, error) {
 	return data, nil
 }
 
-func (ws *WsUpgradeResult) Read(sz int) ([]byte, error) {
+func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 	data := make([]byte, 0)
 	for {
-		if len(data) == sz {
+		if len(data) == size {
 			break
 		}
 		// Temporary slice to read chunk
 		sz := 4096
-		remaining := sz - len(data)
+		remaining := size - len(data)
 		if sz > remaining {
 			sz = remaining
 		}
@@ -77,15 +77,11 @@ func (ws *WsUpgradeResult) Read(sz int) ([]byte, error) {
 
 		n, err := ws.bufrw.Read(temp)
 		if err != nil && err != io.EOF {
-			fmt.Print("error")
 			return data, err
 		}
 
 		data = append(data, temp[:n]...)
-		// fmt.Printf("contents: %s", data)
-		fmt.Println(data) // AB
 	}
-
 	return data, nil
 }
 
