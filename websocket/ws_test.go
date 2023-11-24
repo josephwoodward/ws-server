@@ -56,7 +56,7 @@ func TestReturnsCorrectSecWebSocketKey(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/ws", nil)
 	request.Header.Add("Upgrade", "websocket")
 	request.Header.Add("Connection", "Upgrade")
-	request.Header.Add("Sec-WebSocket-Key", "helloworld")
+	request.Header.Add("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
 	resp := httptest.NewRecorder()
 
 	// Act
@@ -70,14 +70,13 @@ func TestReturnsCorrectSecWebSocketKey(t *testing.T) {
 	}
 
 	got2 := resp.Result().Header.Get("Sec-WebSocket-Accept")
-	want2 := "helloworld+258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+	want2 := "s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
 	if got2 != want2 {
 		t.Errorf("wanted %s but got %s", want2, got2)
 	}
 }
 
 func assert(t *testing.T, expected interface{}, actual interface{}) {
-
 	if actual != expected {
 		t.Errorf("\nexpected: %v \ngot: %v", expected, actual)
 	}

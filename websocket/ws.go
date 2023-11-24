@@ -10,55 +10,9 @@ import (
 	"net/http"
 )
 
-// type WebSocket struct {
-// 	conn      net.Conn
-// 	bufrw     *bufio.ReadWriter
-// 	header    http.Header
-// 	something int
-// }
-
 type WsUpgradeResult struct {
 	conn  net.Conn
 	bufrw *bufio.ReadWriter
-}
-
-// func (ws *WsUpgradeResult) ReadLoop() {
-// 	for {
-// 		frame := Frame{}
-// 		head, err := ws.Read(2)
-// 		if err != nil {
-// 			fmt.Printf(err.Error())
-// 		}
-
-// 		frame.IsFragment = (head[0] & 0x80) == 0x00
-// 		frame.Opcode = head[0] & 0x0F
-// 		frame.Reserved = (head[0] & 0x70)
-// 	}
-// }
-
-func (ws *WsUpgradeResult) Read2(sz int) ([]byte, error) {
-	data := make([]byte, 4096)
-	for {
-		bytesRead, err := ws.bufrw.Read(data)
-		if err != nil && err != io.EOF {
-			return data, err
-		}
-		if bytesRead > 0 {
-			break
-		}
-	}
-
-	return data, nil
-}
-
-func (ws *WsUpgradeResult) Read3(sz int) ([]byte, error) {
-	data := make([]byte, 4096)
-	_, err := ws.bufrw.Read(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
 
 func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
@@ -67,6 +21,7 @@ func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 		if len(data) == size {
 			break
 		}
+
 		// Temporary slice to read chunk
 		sz := 4096
 		remaining := size - len(data)

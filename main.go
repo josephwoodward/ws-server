@@ -41,7 +41,9 @@ func main() {
 
 			// https://datatracker.ietf.org/doc/html/rfc6455#section-5.2
 			// 1 byte (8 bits) is the smallest addressable unit of memory
-			// work out flags with first 4 bits, remaing 4 bits are opcode
+			// first 4 bits are flags with 3 reserved
+			// first 1 bit is Fragment, using 128 binary representation as a bool flag via bitwise operator
+			// remaing 4 bits are opcode
 			// 129 = 1000 0001
 
 			// Fragment is first bit so target first bit to determind fragment
