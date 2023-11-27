@@ -80,6 +80,13 @@ func main() {
 				fmt.Print("ping")
 			case ws.WsTextMessage:
 				fmt.Printf("payload: %s", frame.Payload)
+				f := ws.Frame{
+					IsFragment: false,
+					Opcode:     ws.WsTextMessage,
+					IsMasked:   false,
+					Payload:    []byte("Hell Back"),
+				}
+				wsRes.Write(f)
 			default:
 				break
 

@@ -40,6 +40,25 @@ func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 	return data, nil
 }
 
+const wsFinalBit = 1 << 7
+
+func (ws *WsUpgradeResult) Write(f Frame) error {
+	var result []byte
+	var b byte
+	final := true
+
+	b = byte(f.Opcode)
+	// 1000 0001
+
+	if final {
+		b |= wsFinalBit
+	}
+
+	result = append(result, b)
+	ws.bufrw.Writer.Write(result)
+	return nil
+}
+
 func GenerateAcceptHash(key string) string {
 	h := sha1.New()
 	h.Write([]byte(key))
