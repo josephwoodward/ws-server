@@ -8,6 +8,20 @@ import (
 	ws "github.com/josephwoodward/go-websocket-server/websocket"
 )
 
+func TestWriteCreatesCorrectFrames(t *testing.T) {
+	r := &ws.WsUpgradeResult{}
+	f := ws.Frame{
+		IsFragment: false,
+		Opcode:     0,
+		Reserved:   0,
+		IsMasked:   false,
+		Length:     0,
+		Payload:    []byte{},
+		MaskingKey: []byte{},
+	}
+	r.Write(f)
+}
+
 func TestMethodMustBeGet(t *testing.T) {
 	// Arrange
 	request, _ := http.NewRequest(http.MethodPost, "/ws", nil)

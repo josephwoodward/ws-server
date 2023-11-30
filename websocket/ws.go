@@ -41,20 +41,34 @@ func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 }
 
 const wsFinalBit = 1 << 7
+const wsMaskBit = 1 << 7
 
 func (ws *WsUpgradeResult) Write(f Frame) error {
-	var result []byte
 	var b byte
-	final := true
 
+	// first byte
 	b = byte(f.Opcode)
 	// 1000 0001
 
-	if final {
+	if f.IsFinal {
 		b |= wsFinalBit
 	}
 
-	result = append(result, b)
+	// second byte
+	var b1 byte
+	if f.IsMasked {
+		b1 |= wsMaskBit
+	}
+
+	// b1 |= byte(len(f.Payload))
+	l := len(f.Payload)
+	result := make([]byte, 2)
+	// result := new []byte{}
+	result[0] = b
+	result[1] = b1 | byte(l)
+	// result = append(result, b)
+	// result = append(result, b2)
+
 	ws.bufrw.Writer.Write(result)
 	return nil
 }

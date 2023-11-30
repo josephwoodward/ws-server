@@ -84,7 +84,7 @@ func main() {
 					IsFragment: false,
 					Opcode:     ws.WsTextMessage,
 					IsMasked:   false,
-					Payload:    []byte("Hell Back"),
+					Payload:    []byte("Hello Mike"),
 				}
 				wsRes.Write(f)
 			default:
