@@ -60,8 +60,7 @@ func main() {
 			frame.IsMasked = (head[1] & 0x80) == 0x80
 			frame.Length = uint64(head[1] & 0x7F)
 
-			frame.MaskingKey, err = wsRes.Read(4)
-			if err != nil {
+			if frame.MaskingKey, err = wsRes.Read(4); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 
@@ -73,13 +72,16 @@ func main() {
 			for i := uint64(0); i < frame.Length; i++ {
 				payload[i] ^= frame.MaskingKey[i%4]
 			}
+			if err = wsRes.Flush(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+
 			frame.Payload = payload
 
 			switch frame.Opcode {
 			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
-				fmt.Print("ping")
+				fmt.Print("closing connection")
 			case ws.WsTextMessage:
-				fmt.Printf("payload: %s", frame.Payload)
 				f := ws.Frame{
 					IsFragment: false,
 					Opcode:     ws.WsTextMessage,
@@ -92,7 +94,6 @@ func main() {
 
 			}
 		}
-		// server.ws = wsRes
 	})
 
 	go func() {

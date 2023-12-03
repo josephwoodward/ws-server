@@ -19,7 +19,6 @@ const (
 // https://datatracker.ietf.org/doc/html/rfc6455#section-5.2
 type Frame struct {
 	IsFragment bool // if the
-	IsFinal    bool
 	Opcode     WsOpCode
 	Reserved   byte
 	IsMasked   bool

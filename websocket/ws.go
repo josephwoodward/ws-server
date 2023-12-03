@@ -14,6 +14,9 @@ type WsUpgradeResult struct {
 	conn  net.Conn
 	bufrw *bufio.ReadWriter
 }
+func (ws *WsUpgradeResult) Flush() error {
+	return ws.bufrw.Flush()
+}
 
 func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 	data := make([]byte, 0)
@@ -47,10 +50,10 @@ func (ws *WsUpgradeResult) Write(f Frame) error {
 	var b byte
 
 	// first byte
-	b = byte(f.Opcode)
 	// 1000 0001
+	b = byte(f.Opcode)
 
-	if f.IsFinal {
+	if !f.IsFragment {
 		b |= wsFinalBit
 	}
 
@@ -61,15 +64,17 @@ func (ws *WsUpgradeResult) Write(f Frame) error {
 	}
 
 	// b1 |= byte(len(f.Payload))
-	l := len(f.Payload)
+	// l := len(f.Payload)
+	l := 0
 	result := make([]byte, 2)
-	// result := new []byte{}
 	result[0] = b
 	result[1] = b1 | byte(l)
-	// result = append(result, b)
-	// result = append(result, b2)
 
-	ws.bufrw.Writer.Write(result)
+	if _, err := ws.bufrw.Write(result); err != nil {
+		return err
+	}
+
+	ws.bufrw.Writer.Flush()
 	return nil
 }
 
