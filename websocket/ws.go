@@ -70,7 +70,6 @@ func (ws *WsUpgradeResult) Write(f Frame) error {
 	result[0] = b
 	result[1] = b1 | byte(l)
 
-	// result = append(result, f.Payload...)
 	copy(result[2:], f.Payload)
 
 	if _, err := ws.bufrw.Write(result); err != nil {
