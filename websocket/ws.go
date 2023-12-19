@@ -14,6 +14,7 @@ type WsUpgradeResult struct {
 	conn  net.Conn
 	bufrw *bufio.ReadWriter
 }
+
 func (ws *WsUpgradeResult) Flush() error {
 	return ws.bufrw.Flush()
 }
@@ -53,22 +54,24 @@ func (ws *WsUpgradeResult) Write(f Frame) error {
 	// 1000 0001
 	b = byte(f.Opcode)
 
-	if !f.IsFragment {
+	if f.IsFinal {
 		b |= wsFinalBit
 	}
 
 	// second byte
-	var b1 byte
+	b1 := byte(0)
 	if f.IsMasked {
 		b1 |= wsMaskBit
 	}
 
-	// b1 |= byte(len(f.Payload))
-	// l := len(f.Payload)
-	l := 0
-	result := make([]byte, 2)
+	l := len(f.Payload)
+	result := make([]byte, 2+l)
+
 	result[0] = b
 	result[1] = b1 | byte(l)
+
+	// result = append(result, f.Payload...)
+	copy(result[2:], f.Payload)
 
 	if _, err := ws.bufrw.Write(result); err != nil {
 		return err
@@ -159,4 +162,11 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*WsUpgradeResult, error) {
 	}
 
 	return ws, nil
+}
+
+// Mask the buffer with the given key
+func maskBuf(key, buf []byte) {
+	for i := 0; i < len(buf); i++ {
+		buf[i] ^= key[i&3]
+	}
 }

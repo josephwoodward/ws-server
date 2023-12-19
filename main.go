@@ -38,6 +38,9 @@ func main() {
 				fmt.Printf(err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
 			}
+			if len(head) == 0 {
+				continue
+			}
 
 			// https://datatracker.ietf.org/doc/html/rfc6455#section-5.2
 			// 1 byte (8 bits) is the smallest addressable unit of memory
@@ -53,7 +56,7 @@ func main() {
 			// 10000001
 			// 10000000 = 0
 
-			frame.IsFragment = (head[0] & 0x80) == 0x00
+			frame.IsFinal = (head[0] & 0x80) == 0x00
 			frame.Opcode = ws.WsOpCode(head[0] & 0x0F)
 			frame.Reserved = (head[0] & 0x70)
 
@@ -83,10 +86,10 @@ func main() {
 				fmt.Print("closing connection")
 			case ws.WsTextMessage:
 				f := ws.Frame{
-					IsFragment: false,
-					Opcode:     ws.WsTextMessage,
-					IsMasked:   false,
-					Payload:    []byte("Hello Mike"),
+					IsFinal:  true,
+					Opcode:   ws.WsTextMessage,
+					IsMasked: false,
+					Payload:  []byte("hello mike"),
 				}
 				wsRes.Write(f)
 			default:

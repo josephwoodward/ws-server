@@ -8,7 +8,7 @@ func TestWriteCreatesCorrectFrames(t *testing.T) {
 	r := &WsUpgradeResult{}
 	// r.bufrw =
 	f := Frame{
-		IsFragment: false,
+		IsFinal:    false,
 		Opcode:     0,
 		Reserved:   0,
 		IsMasked:   false,

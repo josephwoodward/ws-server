@@ -11,7 +11,7 @@ import (
 func TestWriteCreatesCorrectFrames(t *testing.T) {
 	r := &ws.WsUpgradeResult{}
 	f := ws.Frame{
-		IsFragment: false,
+		IsFinal:    false,
 		Opcode:     0,
 		Reserved:   0,
 		IsMasked:   false,
