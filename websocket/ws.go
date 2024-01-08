@@ -103,8 +103,8 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*WsUpgradeResult, error) {
 	}
 
 	if h := r.Header.Get("Upgrade"); h != "websocket" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		http.Error(w, "invalid value for header 'upgrade'", http.StatusMethodNotAllowed)
+		return nil, fmt.Errorf("request upgrade header must be 'websocket'")
 	}
 
 	if h := r.Header.Get("Connection"); h != "Upgrade" {
