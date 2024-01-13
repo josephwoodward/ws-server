@@ -12,11 +12,11 @@ import (
 
 type WsUpgradeResult struct {
 	conn  net.Conn
-	bufrw *bufio.ReadWriter
+	Bufrw *bufio.ReadWriter
 }
 
 func (ws *WsUpgradeResult) Flush() error {
-	return ws.bufrw.Flush()
+	return ws.Bufrw.Flush()
 }
 
 func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
@@ -34,7 +34,7 @@ func (ws *WsUpgradeResult) Read(size int) ([]byte, error) {
 		}
 		temp := make([]byte, sz)
 
-		n, err := ws.bufrw.Read(temp)
+		n, err := ws.Bufrw.Read(temp)
 		if err != nil && err != io.EOF {
 			return data, err
 		}
@@ -72,11 +72,11 @@ func (ws *WsUpgradeResult) Write(f Frame) error {
 
 	copy(result[2:], f.Payload)
 
-	if _, err := ws.bufrw.Write(result); err != nil {
+	if _, err := ws.Bufrw.Write(result); err != nil {
 		return err
 	}
 
-	ws.bufrw.Writer.Flush()
+	ws.Bufrw.Writer.Flush()
 	return nil
 }
 
@@ -157,7 +157,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request) (*WsUpgradeResult, error) {
 
 	ws := &WsUpgradeResult{
 		conn:  conn,
-		bufrw: bufrw,
+		Bufrw: bufrw,
 	}
 
 	return ws, nil

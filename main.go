@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,12 +33,13 @@ func main() {
 		for {
 			frame := ws.Frame{}
 
-			// read first 2 bytes (16 bits)
-			head, err := wsRes.Read(2)
-			if err != nil {
-				fmt.Printf(err.Error())
-				w.WriteHeader(http.StatusInternalServerError)
+			// Read initial 8 bits (2 bytes). This will give us enough information to decide how we handle the frame.
+			head := make([]byte, 2)
+			if _, err = wsRes.Bufrw.Read(head); err != nil {
+				fmt.Print("breaking head read")
+				break
 			}
+
 			if len(head) == 0 {
 				continue
 			}
@@ -58,43 +60,47 @@ func main() {
 
 			frame.IsFinal = (head[0] & 0x80) == 0x00
 			frame.Opcode = ws.WsOpCode(head[0] & 0x0F)
+			fmt.Printf("For byte '%d', Opcode is %d\n", head[0], frame.Opcode)
 			frame.Reserved = (head[0] & 0x70)
 
 			frame.IsMasked = (head[1] & 0x80) == 0x80
 			frame.Length = uint64(head[1] & 0x7F)
 
-			if frame.MaskingKey, err = wsRes.Read(4); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+			maskingKey := make([]byte, 4)
+			if _, err = wsRes.Bufrw.Read(maskingKey); err == io.EOF {
+				fmt.Print("breaking masking key")
+				break
 			}
 
-			payload, err := wsRes.Read(int(frame.Length)) // possible data loss
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+			frame.MaskingKey = maskingKey
+
+			payload := make([]byte, int(frame.Length))
+			if _, err = wsRes.Bufrw.Read(payload); err == io.EOF {
+				fmt.Print("breaking payload length")
+				break
 			}
 
 			for i := uint64(0); i < frame.Length; i++ {
 				payload[i] ^= frame.MaskingKey[i%4]
 			}
-			if err = wsRes.Flush(); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-
 			frame.Payload = payload
 
 			switch frame.Opcode {
-			case ws.WsPingMessage, ws.WsPongMessage, ws.WsCloseMessage:
+			case ws.WsCloseMessage:
 				fmt.Print("closing connection")
+			case ws.WsPingMessage, ws.WsPongMessage:
+				fmt.Print("ping / pong")
 			case ws.WsTextMessage:
+				fmt.Printf("received payload message: %s\n", string(frame.Payload))
 				f := ws.Frame{
 					IsFinal:  true,
 					Opcode:   ws.WsTextMessage,
 					IsMasked: false,
-					Payload:  []byte("hello mike"),
+					Payload:  []byte("Hello Mike"),
 				}
 				wsRes.Write(f)
 			default:
 				break
-
 			}
 		}
 	})
